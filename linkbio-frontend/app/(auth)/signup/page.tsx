@@ -1,15 +1,15 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
-import { Label } from '@/components/ui/Label';
-import { useAuth } from '@/context/AuthContext';
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { Label } from "@/components/ui/Label";
+import { useAuth } from "@/context/AuthContext";
+import { zodResolver } from "@hookform/resolvers/zod";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 
 const signupSchema = z.object({
   username: z.string().min(3).max(30),
@@ -23,7 +23,7 @@ type SignupForm = z.infer<typeof signupSchema>;
 export default function SignupPage() {
   const router = useRouter();
   const { setUser } = useAuth();
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const {
     register,
     handleSubmit,
@@ -31,21 +31,21 @@ export default function SignupPage() {
   } = useForm<SignupForm>({ resolver: zodResolver(signupSchema) });
 
   const onSubmit = async (data: SignupForm) => {
-    setError('');
+    setError("");
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/signup`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const res = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
-        credentials: 'include',
+        credentials: "include",
       });
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.message || 'Signup failed');
+        throw new Error(err.message || "Signup failed");
       }
       const user = await res.json();
       setUser(user);
-      router.push('/dashboard');
+      router.push("/dashboard");
     } catch (err) {
       setError((err as Error).message);
     }
@@ -59,30 +59,38 @@ export default function SignupPage() {
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="username">Username</Label>
-            <Input id="username" {...register('username')} />
-            {errors.username && <p className="text-sm text-red-500">{errors.username.message}</p>}
+            <Input id="username" {...register("username")} />
+            {errors.username && (
+              <p className="text-sm text-red-500">{errors.username.message}</p>
+            )}
           </div>
           <div className="space-y-2">
             <Label htmlFor="name">Name</Label>
-            <Input id="name" {...register('name')} />
-            {errors.name && <p className="text-sm text-red-500">{errors.name.message}</p>}
+            <Input id="name" {...register("name")} />
+            {errors.name && (
+              <p className="text-sm text-red-500">{errors.name.message}</p>
+            )}
           </div>
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" {...register('email')} />
-            {errors.email && <p className="text-sm text-red-500">{errors.email.message}</p>}
+            <Input id="email" type="email" {...register("email")} />
+            {errors.email && (
+              <p className="text-sm text-red-500">{errors.email.message}</p>
+            )}
           </div>
           <div className="space-y-2">
             <Label htmlFor="password">Password</Label>
-            <Input id="password" type="password" {...register('password')} />
-            {errors.password && <p className="text-sm text-red-500">{errors.password.message}</p>}
+            <Input id="password" type="password" {...register("password")} />
+            {errors.password && (
+              <p className="text-sm text-red-500">{errors.password.message}</p>
+            )}
           </div>
           <Button type="submit" className="w-full" disabled={isSubmitting}>
-            {isSubmitting ? 'Creating account...' : 'Sign Up'}
+            {isSubmitting ? "Creating account..." : "Sign Up"}
           </Button>
         </form>
         <p className="text-center text-sm">
-          Already have an account?{' '}
+          Already have an account?{" "}
           <Link href="/login" className="text-primary hover:underline">
             Sign in
           </Link>

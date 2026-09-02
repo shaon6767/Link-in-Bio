@@ -1,27 +1,30 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
-import { Textarea } from '@/components/ui/Textarea';
-import { Dialog } from '@/components/ui/Dialog';
-import { Label } from '@/components/ui/Label';
-import LinkCard from '@/components/LinkCard';
-import DashboardNav from '@/components/DashboardNav';
-import { Skeleton } from '@/components/ui/Skeleton';
-import { useAuth } from '@/context/AuthContext';
-import type { Link } from '@/interfaces/link';
+import DashboardNav from "@/components/DashboardNav";
+import LinkCard from "@/components/LinkCard";
+import { Button } from "@/components/ui/Button";
+import { Dialog } from "@/components/ui/Dialog";
+import { Input } from "@/components/ui/Input";
+import { Label } from "@/components/ui/Label";
+import { Skeleton } from "@/components/ui/Skeleton";
+import { useAuth } from "@/context/AuthContext";
+import type { Link } from "@/interfaces/link";
+import { useEffect, useState } from "react";
 
 export default function DashboardPage() {
   const { user, loading } = useAuth();
   const [links, setLinks] = useState<Link[]>([]);
   const [open, setOpen] = useState(false);
   const [editingLink, setEditingLink] = useState<Link | null>(null);
-  const [formData, setFormData] = useState({ title: '', url: '', isActive: true });
+  const [formData, setFormData] = useState({
+    title: "",
+    url: "",
+    isActive: true,
+  });
 
   const fetchLinks = async () => {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/links`, {
-      credentials: 'include',
+    const res = await fetch(`/api/links`, {
+      credentials: "include",
     });
     if (res.ok) {
       const data = await res.json();
@@ -35,22 +38,20 @@ export default function DashboardPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const url = editingLink
-      ? `${process.env.NEXT_PUBLIC_API_URL}/api/links/${editingLink._id}`
-      : `${process.env.NEXT_PUBLIC_API_URL}/api/links`;
-    const method = editingLink ? 'PATCH' : 'POST';
+    const url = editingLink ? `/api/links/${editingLink._id}` : `/api/links`;
+    const method = editingLink ? "PATCH" : "POST";
 
     const res = await fetch(url, {
       method,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(formData),
-      credentials: 'include',
+      credentials: "include",
     });
 
     if (res.ok) {
       setOpen(false);
       setEditingLink(null);
-      setFormData({ title: '', url: '', isActive: true });
+      setFormData({ title: "", url: "", isActive: true });
       fetchLinks();
     }
   };
@@ -62,19 +63,19 @@ export default function DashboardPage() {
   };
 
   const handleDelete = async (id: string) => {
-    await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/links/${id}`, {
-      method: 'DELETE',
-      credentials: 'include',
+    await fetch(`/api/links/${id}`, {
+      method: "DELETE",
+      credentials: "include",
     });
     fetchLinks();
   };
 
   const handleToggle = async (link: Link) => {
-    await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/links/${link._id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+    await fetch(`/api/links/${link._id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ isActive: !link.isActive }),
-      credentials: 'include',
+      credentials: "include",
     });
     fetchLinks();
   };
@@ -99,14 +100,22 @@ export default function DashboardPage() {
       <div className="mx-auto max-w-2xl p-6">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold">Your Links</h1>
-          <Button onClick={() => { setEditingLink(null); setFormData({ title: '', url: '', isActive: true }); setOpen(true); }}>
+          <Button
+            onClick={() => {
+              setEditingLink(null);
+              setFormData({ title: "", url: "", isActive: true });
+              setOpen(true);
+            }}
+          >
             Add Link
           </Button>
         </div>
 
         <div className="space-y-3">
           {links.length === 0 ? (
-            <p className="text-center text-muted-foreground py-12">No links yet. Add your first link!</p>
+            <p className="text-center text-muted-foreground py-12">
+              No links yet. Add your first link!
+            </p>
           ) : (
             links.map((link) => (
               <LinkCard
@@ -123,17 +132,35 @@ export default function DashboardPage() {
 
       <Dialog open={open} onOpenChange={setOpen}>
         <div className="space-y-4">
-          <h2 className="text-lg font-semibold">{editingLink ? 'Edit Link' : 'Add Link'}</h2>
+          <h2 className="text-lg font-semibold">
+            {editingLink ? "Edit Link" : "Add Link"}
+          </h2>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="title">Title</Label>
-              <Input id="title" value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} required />
+              <Input
+                id="title"
+                value={formData.title}
+                onChange={(e) =>
+                  setFormData({ ...formData, title: e.target.value })
+                }
+                required
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="url">URL</Label>
-              <Input id="url" value={formData.url} onChange={(e) => setFormData({ ...formData, url: e.target.value })} required />
+              <Input
+                id="url"
+                value={formData.url}
+                onChange={(e) =>
+                  setFormData({ ...formData, url: e.target.value })
+                }
+                required
+              />
             </div>
-            <Button type="submit" className="w-full">{editingLink ? 'Update' : 'Add'}</Button>
+            <Button type="submit" className="w-full">
+              {editingLink ? "Update" : "Add"}
+            </Button>
           </form>
         </div>
       </Dialog>

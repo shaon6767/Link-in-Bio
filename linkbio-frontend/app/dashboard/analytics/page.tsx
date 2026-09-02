@@ -1,12 +1,9 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/Tabs';
-import DashboardNav from '@/components/DashboardNav';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
-import { Label } from '@/components/ui/Label';
-import { useAuth } from '@/context/AuthContext';
+import DashboardNav from "@/components/DashboardNav";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/Tabs";
+import { useAuth } from "@/context/AuthContext";
+import { useEffect, useState } from "react";
 
 interface Stats {
   totalClicks: number;
@@ -19,16 +16,22 @@ export default function AnalyticsPage() {
 
   useEffect(() => {
     if (user) {
-      fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/links`, {
-        credentials: 'include',
+      fetch(`/api/links`, {
+        credentials: "include",
       })
         .then((res) => res.json())
         .then((links) => {
-          const totalClicks = links.reduce((sum: number, link: any) => sum + link.clickCount, 0);
+          const totalClicks = links.reduce(
+            (sum: number, link: any) => sum + link.clickCount,
+            0,
+          );
           const topLinks = links
             .sort((a: any, b: any) => b.clickCount - a.clickCount)
             .slice(0, 5)
-            .map((link: any) => ({ title: link.title, clicks: link.clickCount }));
+            .map((link: any) => ({
+              title: link.title,
+              clicks: link.clickCount,
+            }));
           setStats({ totalClicks, topLinks });
         });
     }
@@ -63,9 +66,14 @@ export default function AnalyticsPage() {
           </TabsContent>
           <TabsContent value="top" className="mt-4 space-y-3">
             {stats?.topLinks.map((link, i) => (
-              <div key={i} className="flex items-center justify-between rounded-lg border p-4">
+              <div
+                key={i}
+                className="flex items-center justify-between rounded-lg border p-4"
+              >
                 <span className="font-medium">{link.title}</span>
-                <span className="text-sm text-muted-foreground">{link.clicks} clicks</span>
+                <span className="text-sm text-muted-foreground">
+                  {link.clicks} clicks
+                </span>
               </div>
             ))}
           </TabsContent>

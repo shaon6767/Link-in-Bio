@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { Skeleton } from '@/components/ui/Skeleton';
-import { Card } from '@/components/ui/Card';
+import { Card } from "@/components/ui/Card";
+import { Skeleton } from "@/components/ui/Skeleton";
+import { useEffect, useState } from "react";
 
 interface Profile {
   username: string;
@@ -26,11 +26,12 @@ export default function ProfileClient({ username }: { username: string }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/profile/${username}`)
+    fetch(`/api/profile/${username}`)
       .then((res) => res.json())
       .then(async (data) => {
         setProfile(data);
-        const linksRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/profile/${username}/links`);
+        const linksRes = await fetch(`/api/profile/${username}/links`);
+
         if (linksRes.ok) {
           const linksData = await linksRes.json();
           setLinks(linksData.filter((l: Link) => l.isActive));
@@ -64,10 +65,17 @@ export default function ProfileClient({ username }: { username: string }) {
   }
 
   return (
-    <div className="mx-auto max-w-md p-6" style={{ '--theme': profile.theme } as React.CSSProperties}>
+    <div
+      className="mx-auto max-w-md p-6"
+      style={{ "--theme": profile.theme } as React.CSSProperties}
+    >
       <div className="flex flex-col items-center text-center space-y-3">
         {profile.avatarUrl && (
-          <img src={profile.avatarUrl} alt={profile.name} className="h-24 w-24 rounded-full object-cover" />
+          <img
+            src={profile.avatarUrl}
+            alt={profile.name}
+            className="h-24 w-24 rounded-full object-cover"
+          />
         )}
         <h1 className="text-2xl font-bold">{profile.name}</h1>
         <p className="text-muted-foreground">@{profile.username}</p>
@@ -80,7 +88,12 @@ export default function ProfileClient({ username }: { username: string }) {
           </Card>
         ) : (
           links.map((link) => (
-            <a key={link._id} href={`${process.env.NEXT_PUBLIC_API_URL}/r/${link._id}`} target="_blank" rel="noopener noreferrer">
+            <a
+              key={link._id}
+              href={`/r/${link._id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               <Card className="p-4 hover:bg-accent transition-colors w-full text-center">
                 <span className="font-medium">{link.title}</span>
               </Card>

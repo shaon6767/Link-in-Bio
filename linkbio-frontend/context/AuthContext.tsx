@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { createContext, useContext, useEffect, useState } from 'react';
-import type { User } from '@/interfaces/link';
+import type { User } from "@/interfaces/link";
+import { createContext, useContext, useEffect, useState } from "react";
 
 interface AuthContextType {
   user: User | null;
@@ -10,15 +10,20 @@ interface AuthContextType {
   logout: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType>({ user: null, loading: true, setUser: () => {}, logout: async () => {} });
+const AuthContext = createContext<AuthContextType>({
+  user: null,
+  loading: true,
+  setUser: () => {},
+  logout: async () => {},
+});
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/profile/me`, {
-      credentials: 'include',
+    fetch(`/api/profile/me`, {
+      credentials: "include",
     })
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
@@ -29,14 +34,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const logout = async () => {
-    await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/logout`, {
-      method: 'POST',
-      credentials: 'include',
+    await fetch(`/api/auth/logout`, {
+      method: "POST",
+      credentials: "include",
     });
     setUser(null);
   };
 
-  return <AuthContext.Provider value={{ user, loading, setUser, logout }}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={{ user, loading, setUser, logout }}>
+      {children}
+    </AuthContext.Provider>
+  );
 }
 
 export function useAuth() {

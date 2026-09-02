@@ -31,7 +31,7 @@ export default function SettingsPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
-    await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/profile`, {
+    await fetch(`/api/profile`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, bio, theme, avatarUrl }),
