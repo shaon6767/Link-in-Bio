@@ -9,6 +9,7 @@ router.use(apiLimiter);
 router.use(authenticate);
 
 router.get('/', getProfile);
+router.get('/me', getProfile);
 router.patch('/', updateProfile);
 
 export default router;
