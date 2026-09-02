@@ -30,9 +30,7 @@ export default function ProfileClient({ username }: { username: string }) {
       .then((res) => res.json())
       .then(async (data) => {
         setProfile(data);
-        const linksRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/links`, {
-          headers: { 'x-user-id': data._id },
-        });
+        const linksRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/profile/${username}/links`);
         if (linksRes.ok) {
           const linksData = await linksRes.json();
           setLinks(linksData.filter((l: Link) => l.isActive));

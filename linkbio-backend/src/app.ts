@@ -45,6 +45,20 @@ app.use('/api/links', linkRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/billing', billingRoutes);
 
+app.get('/api/profile/:username/links', async (req: Request, res: Response) => {
+  try {
+    const { username } = req.params;
+    const user = await User.findOne({ username: username.toLowerCase() });
+    if (!user) {
+      return res.status(404).json({ message: 'Profile not found' });
+    }
+    const links = await Link.find({ userId: user._id, isActive: true }).sort({ order: 1, createdAt: 1 });
+    res.json(links);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching links', error: (error as Error).message });
+  }
+});
+
 app.get('/api/profile/:username', async (req: Request, res: Response) => {
   try {
     const { username } = req.params;

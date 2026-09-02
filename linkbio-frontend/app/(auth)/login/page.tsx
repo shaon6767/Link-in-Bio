@@ -9,6 +9,7 @@ import { z } from 'zod';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
+import { useAuth } from '@/context/AuthContext';
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -19,6 +20,7 @@ type LoginForm = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
   const router = useRouter();
+  const { setUser } = useAuth();
   const [error, setError] = useState('');
   const {
     register,
@@ -39,6 +41,8 @@ export default function LoginPage() {
         const err = await res.json();
         throw new Error(err.message || 'Login failed');
       }
+      const user = await res.json();
+      setUser(user);
       router.push('/dashboard');
     } catch (err) {
       setError((err as Error).message);

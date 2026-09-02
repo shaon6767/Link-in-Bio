@@ -9,6 +9,7 @@ import { z } from 'zod';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
+import { useAuth } from '@/context/AuthContext';
 
 const signupSchema = z.object({
   username: z.string().min(3).max(30),
@@ -21,6 +22,7 @@ type SignupForm = z.infer<typeof signupSchema>;
 
 export default function SignupPage() {
   const router = useRouter();
+  const { setUser } = useAuth();
   const [error, setError] = useState('');
   const {
     register,
@@ -41,6 +43,8 @@ export default function SignupPage() {
         const err = await res.json();
         throw new Error(err.message || 'Signup failed');
       }
+      const user = await res.json();
+      setUser(user);
       router.push('/dashboard');
     } catch (err) {
       setError((err as Error).message);
