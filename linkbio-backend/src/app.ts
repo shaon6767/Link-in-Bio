@@ -22,19 +22,6 @@ app.use(
 app.use(cookieParser());
 app.use(express.json());
 
-app.get('/api/profile/:username', async (req: Request, res: Response) => {
-  try {
-    const { username } = req.params;
-    const user = await User.findOne({ username: username.toLowerCase() }).select('-passwordHash');
-    if (!user) {
-      return res.status(404).json({ message: 'Profile not found' });
-    }
-    res.json(user);
-  } catch (error) {
-    res.status(500).json({ message: 'Error fetching profile', error: (error as Error).message });
-  }
-});
-
 app.get('/r/:linkId', redirectLimiter, async (req: Request, res: Response) => {
   try {
     const { linkId } = req.params;
@@ -57,6 +44,19 @@ app.use('/api/auth', authRoutes);
 app.use('/api/links', linkRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/billing', billingRoutes);
+
+app.get('/api/profile/:username', async (req: Request, res: Response) => {
+  try {
+    const { username } = req.params;
+    const user = await User.findOne({ username: username.toLowerCase() }).select('-passwordHash');
+    if (!user) {
+      return res.status(404).json({ message: 'Profile not found' });
+    }
+    res.json(user);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching profile', error: (error as Error).message });
+  }
+});
 
 app.use(errorHandler);
 
