@@ -4,6 +4,22 @@ import User, { IUser } from '../models/User';
 import { generateTokens } from '../utils/jwt';
 import { AuthRequest } from '../middleware/auth.middleware';
 
+const isProduction = process.env.NODE_ENV === 'production';
+
+const cookieOptions = {
+  httpOnly: true,
+  secure: isProduction,
+  sameSite: (isProduction ? 'none' : 'lax') as 'none' | 'lax',
+  maxAge: 15 * 60 * 1000,
+};
+
+const refreshCookieOptions = {
+  httpOnly: true,
+  secure: isProduction,
+  sameSite: (isProduction ? 'none' : 'lax') as 'none' | 'lax',
+  maxAge: 7 * 24 * 60 * 60 * 1000,
+};
+
 const RESERVED_USERNAMES = [
   'dashboard',
   'login',
@@ -43,19 +59,9 @@ export const signup = async (req: AuthRequest, res: Response) => {
 
     const { accessToken, refreshToken } = generateTokens(user._id.toString());
 
-    res.cookie('accessToken', accessToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 15 * 60 * 1000,
-    });
+    res.cookie('accessToken', accessToken, cookieOptions);
 
-    res.cookie('refreshToken', refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
+    res.cookie('refreshToken', refreshToken, refreshCookieOptions);
 
     res.status(201).json({
       _id: user._id,
@@ -84,19 +90,9 @@ export const login = async (req: AuthRequest, res: Response) => {
 
     const { accessToken, refreshToken } = generateTokens(user._id.toString());
 
-    res.cookie('accessToken', accessToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 15 * 60 * 1000,
-    });
+    res.cookie('accessToken', accessToken, cookieOptions);
 
-    res.cookie('refreshToken', refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
+    res.cookie('refreshToken', refreshToken, refreshCookieOptions);
 
     res.json({
       _id: user._id,
@@ -124,12 +120,7 @@ export const refresh = async (req: AuthRequest, res: Response) => {
 
     const { accessToken } = generateTokens(decoded.userId);
 
-    res.cookie('accessToken', accessToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 15 * 60 * 1000,
-    });
+    res.cookie('accessToken', accessToken, cookieOptions);
 
     res.json({ message: 'Token refreshed' });
   } catch (error) {
