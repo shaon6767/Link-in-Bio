@@ -28,6 +28,12 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { useEffect, useState } from "react";
+import { z } from "zod";
+
+const urlSchema = z
+  .string()
+  .trim()
+  .url({ message: "Enter a valid URL, e.g. https://example.com" });
 
 export default function DashboardPage() {
   const { user, loading } = useAuth();
@@ -39,6 +45,7 @@ export default function DashboardPage() {
     url: "",
     isActive: true,
   });
+  const [urlError, setUrlError] = useState("");
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -60,13 +67,21 @@ export default function DashboardPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const result = urlSchema.safeParse(formData.url);
+    if (!result.success) {
+      setUrlError(result.error.issues[0].message);
+      return;
+    }
+    setUrlError("");
+
     const url = editingLink ? `/api/links/${editingLink._id}` : `/api/links`;
     const method = editingLink ? "PATCH" : "POST";
 
     const res = await fetch(url, {
       method,
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(formData),
+      body: JSON.stringify({ ...formData, url: result.data }),
       credentials: "include",
     });
 
@@ -81,6 +96,7 @@ export default function DashboardPage() {
   const handleEdit = (link: Link) => {
     setEditingLink(link);
     setFormData({ title: link.title, url: link.url, isActive: link.isActive });
+    setUrlError("");
     setOpen(true);
   };
 
@@ -145,6 +161,7 @@ export default function DashboardPage() {
             onClick={() => {
               setEditingLink(null);
               setFormData({ title: "", url: "", isActive: true });
+              setUrlError("");
               setOpen(true);
             }}
           >
@@ -203,12 +220,15 @@ export default function DashboardPage() {
               <Label htmlFor="url">URL</Label>
               <Input
                 id="url"
+                placeholder="https://example.com"
                 value={formData.url}
-                onChange={(e) =>
-                  setFormData({ ...formData, url: e.target.value })
-                }
+                onChange={(e) => {
+                  setFormData({ ...formData, url: e.target.value });
+                  setUrlError("");
+                }}
                 required
               />
+              {urlError && <p className="text-sm text-red-500">{urlError}</p>}
             </div>
             <Button type="submit" className="w-full">
               {editingLink ? "Update" : "Add"}
