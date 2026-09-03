@@ -3,12 +3,30 @@
 import DashboardNav from "@/components/DashboardNav";
 import LinkCard from "@/components/LinkCard";
 import { Button } from "@/components/ui/Button";
-import { Dialog } from "@/components/ui/Dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/Dialog";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { useAuth } from "@/context/AuthContext";
 import type { Link } from "@/interfaces/link";
+import {
+  closestCenter,
+  DndContext,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
 import { useEffect, useState } from "react";
 
 export default function DashboardPage() {
@@ -21,6 +39,10 @@ export default function DashboardPage() {
     url: "",
     isActive: true,
   });
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+  );
 
   const fetchLinks = async () => {
     const res = await fetch(`/api/links`, {
@@ -80,6 +102,25 @@ export default function DashboardPage() {
     fetchLinks();
   };
 
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = links.findIndex((l) => l._id === active.id);
+    const newIndex = links.findIndex((l) => l._id === over.id);
+    const reordered = arrayMove(links, oldIndex, newIndex);
+    setLinks(reordered);
+
+    await fetch(`/api/links/reorder`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        links: reordered.map((l, index) => ({ id: l._id, order: index })),
+      }),
+      credentials: "include",
+    });
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen">
@@ -117,24 +158,35 @@ export default function DashboardPage() {
               No links yet. Add your first link!
             </p>
           ) : (
-            links.map((link) => (
-              <LinkCard
-                key={link._id}
-                link={link}
-                onEdit={() => handleEdit(link)}
-                onDelete={() => handleDelete(link._id)}
-                onToggle={() => handleToggle(link)}
-              />
-            ))
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext
+                items={links.map((l) => l._id)}
+                strategy={verticalListSortingStrategy}
+              >
+                {links.map((link) => (
+                  <LinkCard
+                    key={link._id}
+                    link={link}
+                    onEdit={() => handleEdit(link)}
+                    onDelete={() => handleDelete(link._id)}
+                    onToggle={() => handleToggle(link)}
+                  />
+                ))}
+              </SortableContext>
+            </DndContext>
           )}
         </div>
       </div>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <div className="space-y-4">
-          <h2 className="text-lg font-semibold">
-            {editingLink ? "Edit Link" : "Add Link"}
-          </h2>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{editingLink ? "Edit Link" : "Add Link"}</DialogTitle>
+          </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="title">Title</Label>
@@ -162,7 +214,7 @@ export default function DashboardPage() {
               {editingLink ? "Update" : "Add"}
             </Button>
           </form>
-        </div>
+        </DialogContent>
       </Dialog>
     </div>
   );
