@@ -1,6 +1,7 @@
 "use client";
 
 import type { User } from "@/interfaces/link";
+import { apiFetch } from "@/lib/api";
 import { createContext, useContext, useEffect, useState } from "react";
 
 interface AuthContextType {
@@ -22,9 +23,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`/api/profile/me`, {
-      credentials: "include",
-    })
+    apiFetch(`/api/profile/me`)
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         setUser(data);
@@ -34,10 +33,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const logout = async () => {
-    await fetch(`/api/auth/logout`, {
-      method: "POST",
-      credentials: "include",
-    });
+    await apiFetch(`/api/auth/logout`, { method: "POST" });
     setUser(null);
   };
 

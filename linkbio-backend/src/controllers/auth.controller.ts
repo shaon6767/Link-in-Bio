@@ -1,38 +1,38 @@
-import { Response } from 'express';
-import bcrypt from 'bcryptjs';
-import User, { IUser } from '../models/User';
-import { generateTokens } from '../utils/jwt';
-import { AuthRequest } from '../middleware/auth.middleware';
+import bcrypt from "bcryptjs";
+import { Response } from "express";
+import { AuthRequest } from "../middleware/auth.middleware";
+import User from "../models/User";
+import { generateTokens } from "../utils/jwt";
 
-const isProduction = process.env.NODE_ENV === 'production';
+const isProduction = process.env.NODE_ENV === "production";
 
 const cookieOptions = {
   httpOnly: true,
   secure: isProduction,
-  sameSite: (isProduction ? 'none' : 'lax') as 'none' | 'lax',
+  sameSite: (isProduction ? "none" : "lax") as "none" | "lax",
   maxAge: 15 * 60 * 1000,
 };
 
 const refreshCookieOptions = {
   httpOnly: true,
   secure: isProduction,
-  sameSite: (isProduction ? 'none' : 'lax') as 'none' | 'lax',
+  sameSite: (isProduction ? "none" : "lax") as "none" | "lax",
   maxAge: 7 * 24 * 60 * 60 * 1000,
 };
 
 const RESERVED_USERNAMES = [
-  'dashboard',
-  'login',
-  'signup',
-  'api',
-  'settings',
-  'admin',
-  'r',
+  "dashboard",
+  "login",
+  "signup",
+  "api",
+  "settings",
+  "admin",
+  "r",
 ];
 
 const validateUsername = (username: string): string | null => {
   if (RESERVED_USERNAMES.includes(username.toLowerCase())) {
-    return 'Username is reserved';
+    return "Username is reserved";
   }
   return null;
 };
@@ -51,7 +51,7 @@ export const signup = async (req: AuthRequest, res: Response) => {
     });
 
     if (existingUser) {
-      return res.status(400).json({ message: 'User already exists' });
+      return res.status(400).json({ message: "User already exists" });
     }
 
     const user = new User({ username, email, passwordHash: password, name });
@@ -59,9 +59,9 @@ export const signup = async (req: AuthRequest, res: Response) => {
 
     const { accessToken, refreshToken } = generateTokens(user._id.toString());
 
-    res.cookie('accessToken', accessToken, cookieOptions);
+    res.cookie("accessToken", accessToken, cookieOptions);
 
-    res.cookie('refreshToken', refreshToken, refreshCookieOptions);
+    res.cookie("refreshToken", refreshToken, refreshCookieOptions);
 
     res.status(201).json({
       _id: user._id,
@@ -70,7 +70,9 @@ export const signup = async (req: AuthRequest, res: Response) => {
       name: user.name,
     });
   } catch (error) {
-    res.status(500).json({ message: 'Error signing up', error: (error as Error).message });
+    res
+      .status(500)
+      .json({ message: "Error signing up", error: (error as Error).message });
   }
 };
 
@@ -80,19 +82,19 @@ export const login = async (req: AuthRequest, res: Response) => {
 
     const user = await User.findOne({ email });
     if (!user) {
-      return res.status(401).json({ message: 'Invalid credentials' });
+      return res.status(401).json({ message: "Invalid credentials" });
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
     if (!isPasswordValid) {
-      return res.status(401).json({ message: 'Invalid credentials' });
+      return res.status(401).json({ message: "Invalid credentials" });
     }
 
     const { accessToken, refreshToken } = generateTokens(user._id.toString());
 
-    res.cookie('accessToken', accessToken, cookieOptions);
+    res.cookie("accessToken", accessToken, cookieOptions);
 
-    res.cookie('refreshToken', refreshToken, refreshCookieOptions);
+    res.cookie("refreshToken", refreshToken, refreshCookieOptions);
 
     res.json({
       _id: user._id,
@@ -101,7 +103,9 @@ export const login = async (req: AuthRequest, res: Response) => {
       name: user.name,
     });
   } catch (error) {
-    res.status(500).json({ message: 'Error logging in', error: (error as Error).message });
+    res
+      .status(500)
+      .json({ message: "Error logging in", error: (error as Error).message });
   }
 };
 
@@ -110,26 +114,53 @@ export const refresh = async (req: AuthRequest, res: Response) => {
     const refreshToken = req.cookies.refreshToken;
 
     if (!refreshToken) {
-      return res.status(401).json({ message: 'Refresh token required' });
+      return res.status(401).json({ message: "Refresh token required" });
     }
 
-    const decoded = require('jsonwebtoken').verify(
+    const decoded = require("jsonwebtoken").verify(
       refreshToken,
-      process.env.JWT_REFRESH_SECRET!
+      process.env.JWT_REFRESH_SECRET!,
     ) as { userId: string };
 
     const { accessToken } = generateTokens(decoded.userId);
 
-    res.cookie('accessToken', accessToken, cookieOptions);
+    res.cookie("accessToken", accessToken, cookieOptions);
 
-    res.json({ message: 'Token refreshed' });
+    res.json({ message: "Token refreshed" });
   } catch (error) {
-    res.status(401).json({ message: 'Invalid refresh token' });
+    res.status(401).json({ message: "Invalid refresh token" });
+  }
+};
+
+export const changePassword = async (req: AuthRequest, res: Response) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    const user = await User.findById(req.user!.userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const isValid = await bcrypt.compare(currentPassword, user.passwordHash);
+    if (!isValid) {
+      return res.status(401).json({ message: "Current password is incorrect" });
+    }
+
+    user.passwordHash = newPassword;
+    await user.save();
+
+    res.json({ message: "Password updated" });
+  } catch (error) {
+    res
+      .status(500)
+      .json({
+        message: "Error changing password",
+        error: (error as Error).message,
+      });
   }
 };
 
 export const logout = (req: AuthRequest, res: Response) => {
-  res.clearCookie('accessToken');
-  res.clearCookie('refreshToken');
-  res.json({ message: 'Logged out' });
+  res.clearCookie("accessToken");
+  res.clearCookie("refreshToken");
+  res.json({ message: "Logged out" });
 };

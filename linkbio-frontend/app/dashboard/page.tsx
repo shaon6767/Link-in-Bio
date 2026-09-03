@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/Label";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { useAuth } from "@/context/AuthContext";
 import type { Link } from "@/interfaces/link";
+import { apiFetch } from "@/lib/api";
 import {
   closestCenter,
   DndContext,
@@ -30,10 +31,16 @@ import {
 import { useEffect, useState } from "react";
 import { z } from "zod";
 
+const normalizeUrl = (value: string) => {
+  const trimmed = value.trim();
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  return `https://${trimmed}`;
+};
+
 const urlSchema = z
   .string()
-  .trim()
-  .url({ message: "Enter a valid URL, e.g. https://example.com" });
+  .transform(normalizeUrl)
+  .pipe(z.string().url({ message: "Enter a valid URL, e.g. www.example.com" }));
 
 export default function DashboardPage() {
   const { user, loading } = useAuth();
@@ -52,12 +59,10 @@ export default function DashboardPage() {
   );
 
   const fetchLinks = async () => {
-    const res = await fetch(`/api/links`, {
-      credentials: "include",
-    });
+    const res = await apiFetch(`/api/links`, {}, { redirectOnFail: true });
     if (res.ok) {
       const data = await res.json();
-      setLinks(data);
+      setLinks(Array.isArray(data) ? data : []);
     }
   };
 
@@ -78,12 +83,15 @@ export default function DashboardPage() {
     const url = editingLink ? `/api/links/${editingLink._id}` : `/api/links`;
     const method = editingLink ? "PATCH" : "POST";
 
-    const res = await fetch(url, {
-      method,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...formData, url: result.data }),
-      credentials: "include",
-    });
+    const res = await apiFetch(
+      url,
+      {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...formData, url: result.data }),
+      },
+      { redirectOnFail: true },
+    );
 
     if (res.ok) {
       setOpen(false);
@@ -101,20 +109,24 @@ export default function DashboardPage() {
   };
 
   const handleDelete = async (id: string) => {
-    await fetch(`/api/links/${id}`, {
-      method: "DELETE",
-      credentials: "include",
-    });
+    await apiFetch(
+      `/api/links/${id}`,
+      { method: "DELETE" },
+      { redirectOnFail: true },
+    );
     fetchLinks();
   };
 
   const handleToggle = async (link: Link) => {
-    await fetch(`/api/links/${link._id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ isActive: !link.isActive }),
-      credentials: "include",
-    });
+    await apiFetch(
+      `/api/links/${link._id}`,
+      {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isActive: !link.isActive }),
+      },
+      { redirectOnFail: true },
+    );
     fetchLinks();
   };
 
@@ -127,14 +139,17 @@ export default function DashboardPage() {
     const reordered = arrayMove(links, oldIndex, newIndex);
     setLinks(reordered);
 
-    await fetch(`/api/links/reorder`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        links: reordered.map((l, index) => ({ id: l._id, order: index })),
-      }),
-      credentials: "include",
-    });
+    await apiFetch(
+      `/api/links/reorder`,
+      {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          links: reordered.map((l, index) => ({ id: l._id, order: index })),
+        }),
+      },
+      { redirectOnFail: true },
+    );
   };
 
   if (loading) {
@@ -220,7 +235,7 @@ export default function DashboardPage() {
               <Label htmlFor="url">URL</Label>
               <Input
                 id="url"
-                placeholder="https://example.com"
+                placeholder="www.example.com"
                 value={formData.url}
                 onChange={(e) => {
                   setFormData({ ...formData, url: e.target.value });

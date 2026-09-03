@@ -1,8 +1,10 @@
 "use client";
 
 import DashboardNav from "@/components/DashboardNav";
+import { Skeleton } from "@/components/ui/Skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/Tabs";
 import { useAuth } from "@/context/AuthContext";
+import { apiFetch } from "@/lib/api";
 import { useEffect, useState } from "react";
 
 interface Stats {
@@ -15,33 +17,36 @@ export default function AnalyticsPage() {
   const [stats, setStats] = useState<Stats | null>(null);
 
   useEffect(() => {
-    if (user) {
-      fetch(`/api/links`, {
-        credentials: "include",
+    if (!user) return;
+
+    apiFetch(`/api/links`, {}, { redirectOnFail: true })
+      .then((res) => (res.ok ? res.json() : []))
+      .then((links) => {
+        if (!Array.isArray(links)) {
+          setStats({ totalClicks: 0, topLinks: [] });
+          return;
+        }
+        const totalClicks = links.reduce(
+          (sum: number, link: any) => sum + link.clickCount,
+          0,
+        );
+        const topLinks = links
+          .sort((a: any, b: any) => b.clickCount - a.clickCount)
+          .slice(0, 5)
+          .map((link: any) => ({ title: link.title, clicks: link.clickCount }));
+        setStats({ totalClicks, topLinks });
       })
-        .then((res) => res.json())
-        .then((links) => {
-          const totalClicks = links.reduce(
-            (sum: number, link: any) => sum + link.clickCount,
-            0,
-          );
-          const topLinks = links
-            .sort((a: any, b: any) => b.clickCount - a.clickCount)
-            .slice(0, 5)
-            .map((link: any) => ({
-              title: link.title,
-              clicks: link.clickCount,
-            }));
-          setStats({ totalClicks, topLinks });
-        });
-    }
+      .catch(() => setStats({ totalClicks: 0, topLinks: [] }));
   }, [user]);
 
   if (loading) {
     return (
       <div className="min-h-screen">
         <DashboardNav />
-        <div className="mx-auto max-w-2xl p-6">Loading...</div>
+        <div className="mx-auto max-w-2xl p-6 space-y-4">
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-24 w-full" />
+        </div>
       </div>
     );
   }
@@ -65,6 +70,9 @@ export default function AnalyticsPage() {
             </div>
           </TabsContent>
           <TabsContent value="top" className="mt-4 space-y-3">
+            {stats?.topLinks.length === 0 && (
+              <p className="text-sm text-muted-foreground">No clicks yet.</p>
+            )}
             {stats?.topLinks.map((link, i) => (
               <div
                 key={i}
