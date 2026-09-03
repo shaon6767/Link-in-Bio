@@ -1,34 +1,35 @@
-"use client";
+'use client';
 
-import DashboardNav from "@/components/DashboardNav";
-import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
-import { Label } from "@/components/ui/Label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/Tabs";
-import { Textarea } from "@/components/ui/Textarea";
-import { useAuth } from "@/context/AuthContext";
-import { apiFetch } from "@/lib/api";
-import { useEffect, useState } from "react";
-import { toast } from "sonner";
+import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/Tabs';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
+import { Textarea } from '@/components/ui/Textarea';
+import { Label } from '@/components/ui/Label';
+import { Skeleton } from '@/components/ui/Skeleton';
+import DashboardNav from '@/components/DashboardNav';
+import { useAuth } from '@/context/AuthContext';
+import { apiFetch } from '@/lib/api';
 
 export default function SettingsPage() {
-  const { user } = useAuth();
-  const [name, setName] = useState("");
-  const [bio, setBio] = useState("");
-  const [theme, setTheme] = useState("#000000");
-  const [avatarUrl, setAvatarUrl] = useState("");
+  const { user, loading, setUser } = useAuth();
+  const [name, setName] = useState('');
+  const [bio, setBio] = useState('');
+  const [theme, setTheme] = useState('#000000');
+  const [avatarUrl, setAvatarUrl] = useState('');
   const [saving, setSaving] = useState(false);
 
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
   const [passwordSaving, setPasswordSaving] = useState(false);
 
   useEffect(() => {
     if (user) {
-      setName(user.name || "");
-      setBio(user.bio || "");
-      setTheme(user.theme || "#000000");
-      setAvatarUrl(user.avatarUrl || "");
+      setName(user.name || '');
+      setBio(user.bio || '');
+      setTheme(user.theme || '#000000');
+      setAvatarUrl(user.avatarUrl || '');
     }
   }, [user]);
 
@@ -38,17 +39,19 @@ export default function SettingsPage() {
     const res = await apiFetch(
       `/api/profile`,
       {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, bio, theme, avatarUrl }),
       },
-      { redirectOnFail: true },
+      { redirectOnFail: true }
     );
     setSaving(false);
     if (res.ok) {
-      toast.success("Profile saved");
+      const updated = await res.json();
+      setUser(updated);
+      toast.success('Profile saved');
     } else {
-      toast.error("Failed to save profile");
+      toast.error('Failed to save profile');
     }
   };
 
@@ -58,22 +61,35 @@ export default function SettingsPage() {
     const res = await apiFetch(
       `/api/auth/password`,
       {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ currentPassword, newPassword }),
       },
-      { redirectOnFail: true },
+      { redirectOnFail: true }
     );
     setPasswordSaving(false);
     if (res.ok) {
-      toast.success("Password updated");
-      setCurrentPassword("");
-      setNewPassword("");
+      toast.success('Password updated');
+      setCurrentPassword('');
+      setNewPassword('');
     } else {
       const data = await res.json().catch(() => null);
-      toast.error(data?.message || "Failed to update password");
+      toast.error(data?.message || 'Failed to update password');
     }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen">
+        <DashboardNav />
+        <div className="mx-auto max-w-2xl p-6 space-y-4">
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-24 w-full" />
+          <Skeleton className="h-24 w-full" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen">
@@ -89,83 +105,43 @@ export default function SettingsPage() {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="name">Name</Label>
-                <Input
-                  id="name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  required
-                />
+                <Input id="name" value={name} onChange={(e) => setName(e.target.value)} required />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="bio">Bio</Label>
-                <Textarea
-                  id="bio"
-                  value={bio}
-                  onChange={(e) => setBio(e.target.value)}
-                  maxLength={160}
-                />
+                <Textarea id="bio" value={bio} onChange={(e) => setBio(e.target.value)} maxLength={160} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="theme">Theme Color</Label>
-                <Input
-                  id="theme"
-                  type="color"
-                  value={theme}
-                  onChange={(e) => setTheme(e.target.value)}
-                />
+                <Input id="theme" type="color" value={theme} onChange={(e) => setTheme(e.target.value)} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="avatarUrl">Avatar URL</Label>
-                <Input
-                  id="avatarUrl"
-                  placeholder="www.example.com/photo.jpg"
-                  value={avatarUrl}
-                  onChange={(e) => setAvatarUrl(e.target.value)}
-                />
+                <Input id="avatarUrl" placeholder="www.example.com/photo.jpg" value={avatarUrl} onChange={(e) => setAvatarUrl(e.target.value)} />
               </div>
-              <Button type="submit" disabled={saving}>
-                {saving ? "Saving..." : "Save"}
-              </Button>
+              <Button type="submit" disabled={saving}>{saving ? 'Saving...' : 'Save'}</Button>
             </form>
           </TabsContent>
           <TabsContent value="account" className="mt-4 space-y-6">
             <div className="space-y-2">
               <Label>Email</Label>
-              <Input value={user?.email || ""} disabled />
+              <Input value={user?.email || ''} disabled />
             </div>
             <div className="space-y-2">
               <Label>Username</Label>
-              <Input value={user?.username || ""} disabled />
+              <Input value={user?.username || ''} disabled />
             </div>
-            <form
-              onSubmit={handlePasswordChange}
-              className="space-y-4 pt-2 border-t"
-            >
+            <form onSubmit={handlePasswordChange} className="space-y-4 pt-2 border-t">
               <p className="text-sm font-medium pt-4">Change password</p>
               <div className="space-y-2">
                 <Label htmlFor="currentPassword">Current password</Label>
-                <Input
-                  id="currentPassword"
-                  type="password"
-                  value={currentPassword}
-                  onChange={(e) => setCurrentPassword(e.target.value)}
-                  required
-                />
+                <Input id="currentPassword" type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} required />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="newPassword">New password</Label>
-                <Input
-                  id="newPassword"
-                  type="password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  minLength={6}
-                  required
-                />
+                <Input id="newPassword" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} minLength={6} required />
               </div>
-              <Button type="submit" disabled={passwordSaving}>
-                {passwordSaving ? "Updating..." : "Update password"}
-              </Button>
+              <Button type="submit" disabled={passwordSaving}>{passwordSaving ? 'Updating...' : 'Update password'}</Button>
             </form>
           </TabsContent>
         </Tabs>
