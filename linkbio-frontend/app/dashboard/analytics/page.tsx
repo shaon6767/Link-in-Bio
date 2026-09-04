@@ -7,36 +7,25 @@ import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/api";
 import { useEffect, useState } from "react";
 
-interface Stats {
+interface Analytics {
   totalClicks: number;
+  dailyClicks: { date: string; count: number }[];
   topLinks: { title: string; clicks: number }[];
 }
 
 export default function AnalyticsPage() {
   const { user, loading } = useAuth();
-  const [stats, setStats] = useState<Stats | null>(null);
+  const [stats, setStats] = useState<Analytics | null>(null);
 
   useEffect(() => {
     if (!user) return;
 
-    apiFetch(`/api/links`, {}, { redirectOnFail: true })
-      .then((res) => (res.ok ? res.json() : []))
-      .then((links) => {
-        if (!Array.isArray(links)) {
-          setStats({ totalClicks: 0, topLinks: [] });
-          return;
-        }
-        const totalClicks = links.reduce(
-          (sum: number, link: any) => sum + link.clickCount,
-          0,
-        );
-        const topLinks = links
-          .sort((a: any, b: any) => b.clickCount - a.clickCount)
-          .slice(0, 5)
-          .map((link: any) => ({ title: link.title, clicks: link.clickCount }));
-        setStats({ totalClicks, topLinks });
+    apiFetch(`/api/links/analytics`, {}, { redirectOnFail: true })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        setStats(data ?? { totalClicks: 0, dailyClicks: [], topLinks: [] });
       })
-      .catch(() => setStats({ totalClicks: 0, topLinks: [] }));
+      .catch(() => setStats({ totalClicks: 0, dailyClicks: [], topLinks: [] }));
   }, [user]);
 
   if (loading) {
@@ -51,6 +40,11 @@ export default function AnalyticsPage() {
     );
   }
 
+  const maxCount = Math.max(
+    1,
+    ...(stats?.dailyClicks.map((d) => d.count) || [1]),
+  );
+
   return (
     <div className="min-h-screen">
       <DashboardNav />
@@ -61,11 +55,29 @@ export default function AnalyticsPage() {
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="top">Top Links</TabsTrigger>
           </TabsList>
-          <TabsContent value="overview" className="mt-4">
-            <div className="grid gap-4">
-              <div className="rounded-lg border p-6">
-                <p className="text-sm text-muted-foreground">Total Clicks</p>
-                <p className="text-3xl font-bold">{stats?.totalClicks || 0}</p>
+          <TabsContent value="overview" className="mt-4 space-y-4">
+            <div className="rounded-lg border p-6">
+              <p className="text-sm text-muted-foreground">Total Clicks</p>
+              <p className="text-3xl font-bold">{stats?.totalClicks || 0}</p>
+            </div>
+
+            <div className="rounded-lg border p-6">
+              <p className="text-sm text-muted-foreground mb-3">Last 14 days</p>
+              <div className="flex items-end gap-1 h-24">
+                {stats?.dailyClicks.map((d) => (
+                  <div
+                    key={d.date}
+                    className="flex-1 flex flex-col items-center gap-1"
+                    title={`${d.date}: ${d.count} clicks`}
+                  >
+                    <div
+                      className="w-full bg-primary rounded-sm"
+                      style={{
+                        height: `${Math.max(4, (d.count / maxCount) * 100)}%`,
+                      }}
+                    />
+                  </div>
+                ))}
               </div>
             </div>
           </TabsContent>

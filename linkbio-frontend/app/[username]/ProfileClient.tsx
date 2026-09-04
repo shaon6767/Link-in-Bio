@@ -1,5 +1,6 @@
 "use client";
 
+import ProfileHeader from "@/components/ProfileHeader";
 import { Card } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { useEffect, useState } from "react";
@@ -65,22 +66,14 @@ export default function ProfileClient({ username }: { username: string }) {
   }
 
   return (
-    <div
-      className="mx-auto max-w-md p-6"
-      style={{ "--theme": profile.theme } as React.CSSProperties}
-    >
-      <div className="flex flex-col items-center text-center space-y-3">
-        {profile.avatarUrl && (
-          <img
-            src={profile.avatarUrl}
-            alt={profile.name}
-            className="h-24 w-24 rounded-full object-cover"
-          />
-        )}
-        <h1 className="text-2xl font-bold">{profile.name}</h1>
-        <p className="text-muted-foreground">@{profile.username}</p>
-        {profile.bio && <p className="text-sm">{profile.bio}</p>}
-      </div>
+    <div className="mx-auto max-w-md p-6">
+      <ProfileHeader
+        username={profile.username}
+        name={profile.name}
+        bio={profile.bio}
+        avatarUrl={profile.avatarUrl}
+        theme={profile.theme}
+      />
       <div className="mt-6 space-y-3">
         {links.length === 0 ? (
           <Card className="p-6 text-center">
@@ -94,7 +87,12 @@ export default function ProfileClient({ username }: { username: string }) {
               target="_blank"
               rel="noopener noreferrer"
             >
-              <Card className="p-4 hover:bg-accent transition-colors w-full text-center">
+              <Card
+                className="p-4 hover:bg-accent transition-colors w-full text-center border-l-4"
+                style={
+                  profile.theme ? { borderLeftColor: profile.theme } : undefined
+                }
+              >
                 <span className="font-medium">{link.title}</span>
               </Card>
             </a>
