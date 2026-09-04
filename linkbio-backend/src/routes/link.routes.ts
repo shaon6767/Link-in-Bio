@@ -1,23 +1,25 @@
-import { Router } from 'express';
+import { Router } from "express";
 import {
-  getLinks,
   createLink,
-  updateLink,
   deleteLink,
+  getAnalytics,
+  getLinks,
   reorderLinks,
-} from '../controllers/link.controller';
-import { authenticate } from '../middleware/auth.middleware';
-import { apiLimiter } from '../middleware/rateLimiter';
+  updateLink,
+} from "../controllers/link.controller";
+import { authenticate } from "../middleware/auth.middleware";
+import { apiLimiter } from "../middleware/rateLimiter";
 
 const router = Router();
 
 router.use(apiLimiter);
 router.use(authenticate);
 
-router.get('/', getLinks);
-router.post('/', createLink);
-router.patch('/:id', updateLink);
-router.delete('/:id', deleteLink);
-router.patch('/reorder', reorderLinks);
+router.get("/", getLinks);
+router.post("/", createLink);
+router.patch("/reorder", reorderLinks);
+router.get("/analytics", getAnalytics);
+router.patch("/:id", updateLink);
+router.delete("/:id", deleteLink);
 
 export default router;
